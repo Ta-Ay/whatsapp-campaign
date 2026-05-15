@@ -139,6 +139,44 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify(historique)); return;
   }
 
+  // ── IMPORTER historique local ──────────────────────
+  if (req.method === "POST" && url === "/importer") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      let imported;
+      try { imported = JSON.parse(body); } catch {
+        res.writeHead(400); res.end(JSON.stringify({ error: "Invalid JSON" })); return;
+      }
+      if (!Array.isArray(imported)) {
+        res.writeHead(400); res.end(JSON.stringify({ error: "Array expected" })); return;
+      }
+      let added = 0;
+      imported.forEach(item => {
+        if (!item.phone || !item.status || !item.timestamp) return;
+        const phone = normalizePhone(item.phone);
+        const ts = item.timestamp;
+        const exists = historique.some(h => h.phone === phone && h.status === item.status && h.timestamp === ts);
+        if (!exists) {
+          historique.push({ phone, status: item.status, timestamp: ts, date: item.date || ts });
+          added++;
+          // Mettre à jour statuts si pas encore présent
+          if (!statuts[phone]) statuts[phone] = {};
+          if (!statuts[phone][item.status]) statuts[phone][item.status] = ts;
+          statuts[phone].dernierStatut = item.status;
+        }
+      });
+      // Trier par date décroissante
+      historique.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      if (historique.length > 10000) historique = historique.slice(0, 10000);
+      saveData();
+      console.log(`[IMPORT] ${added} nouveaux événements importés (total: ${historique.length})`);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, added, total: historique.length }));
+    });
+    return;
+  }
+
   // ── Health check ───────────────────────────────────
   if (req.method === "GET" && (url === "/" || url === "/health")) {
     res.writeHead(200, { "Content-Type": "application/json" });
