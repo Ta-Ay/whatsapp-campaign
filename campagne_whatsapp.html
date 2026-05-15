@@ -180,7 +180,7 @@ input:focus,select:focus{border-color:#6366f1}
         <span id="histCount" style="font-size:12px;color:#9ca3af"></span>
         <button class="btn-sm btn-purple" onclick="loadHistorique()">🔄 Rafraîchir</button>
         <button class="btn-sm btn-green" onclick="exportHistorique()">⬇ Exporter Excel</button>
-        <button class="btn-sm" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600" onclick="document.getElementById('importJsonInput').click()">📥 Importer JSON</button>
+        <button class="btn-sm btn-import-json" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600" onclick="document.getElementById('importJsonInput').click()">📥 Importer JSON</button>
         <input type="file" id="importJsonInput" accept=".json" style="display:none" onchange="importerHistoriqueJSON(this)"/>
       </div>
     </div>
@@ -255,39 +255,37 @@ async function refreshStatuts(){await loadStatuts();updateStats();renderTable();
 
 
 async function importerHistoriqueJSON(input) {
-  const file = input.files[0];
+  var file = input.files[0];
   if (!file) return;
   input.value = '';
-  if (!SERVER_URL) { alert('⚠️ Configure d abord l URL du serveur Railway !'); return; }
-  let data;
+  if (!SERVER_URL) { alert('Configurez d abord l URL du serveur Railway !'); return; }
+  var data;
   try {
-    const text = await file.text();
+    var text = await file.text();
     data = JSON.parse(text);
   } catch(e) {
-    alert('❌ Fichier JSON invalide : ' + e.message);
+    alert('Fichier JSON invalide : ' + e.message);
     return;
   }
-  if (!Array.isArray(data)) { alert('❌ Le fichier doit contenir un tableau JSON.'); return; }
-  const btn = document.querySelector('[onclick*="importJsonInput"]');
-  const origText = btn ? btn.textContent : '';
-  if (btn) { btn.textContent = '⏳ Import...'; btn.disabled = true; }
+  if (!Array.isArray(data)) { alert('Le fichier doit contenir un tableau JSON.'); return; }
+  var btn = document.querySelector('.btn-import-json');
+  var origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Import...'; btn.disabled = true; }
   try {
-    const res = await fetch(SERVER_URL + '/importer', {
+    var res = await fetch(SERVER_URL + '/importer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    const result = await res.json();
+    var result = await res.json();
     if (result.ok) {
-      alert('✅ Import réussi !
-' + result.added + ' nouveaux événements ajoutés
-Total historique : ' + result.total + ' événements');
+      alert('Import reussi ! ' + result.added + ' nouveaux evenements ajoutes. Total : ' + result.total);
       loadHistorique();
     } else {
-      alert('❌ Erreur serveur : ' + JSON.stringify(result));
+      alert('Erreur serveur : ' + JSON.stringify(result));
     }
   } catch(e) {
-    alert('❌ Impossible de contacter Railway : ' + e.message);
+    alert('Impossible de contacter Railway : ' + e.message);
   } finally {
     if (btn) { btn.textContent = origText; btn.disabled = false; }
   }
