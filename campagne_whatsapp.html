@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Campagne WhatsApp — 360dialog</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:2rem;min-height:100vh}
+h1{font-size:20px;font-weight:700;margin-bottom:1.5rem}
+.section{background:#fff;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.section-title{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+label{font-size:13px;color:#374151;display:block;margin-bottom:4px;font-weight:500}
+input[type=text],input[type=password],select{width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none}
+input:focus,select:focus{border-color:#6366f1}
+.badge{display:inline-flex;align-items:center;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:600}
+.badge-success{background:#d1fae5;color:#065f46}
+.badge-warn{background:#fef3c7;color:#92400e}
+.badge-danger{background:#fee2e2;color:#991b1b}
+.badge-gray{background:#f3f4f6;color:#6b7280}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.stat-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1rem}
+.stat-card{background:#f9fafb;border-radius:10px;padding:.75rem 1rem;text-align:center;border:1px solid #e5e7eb;cursor:pointer;transition:all .2s}
+.stat-card:hover,.stat-card.active{border-color:#6366f1;background:#eff6ff;box-shadow:0 0 0 2px #c7d2fe}
+.stat-val{font-size:24px;font-weight:700}
+.stat-lbl{font-size:12px;color:#6b7280;margin-top:2px}
+.log-box{background:#111827;border-radius:8px;padding:.75rem;font-size:12px;font-family:monospace;max-height:150px;overflow-y:auto;margin-top:.75rem}
+.log-line{padding:2px 0}.log-ok{color:#34d399}.log-err{color:#f87171}.log-info{color:#9ca3af}
+.btn-primary{background:#6366f1;color:#fff;border:none;font-weight:600;padding:10px 20px;font-size:15px;width:100%;cursor:pointer;border-radius:8px;margin-bottom:8px}
+.btn-primary:disabled{background:#c7d2fe;cursor:not-allowed}
+.btn-sm{padding:6px 14px;font-size:12px;font-weight:600;border:none;border-radius:6px;cursor:pointer}
+.btn-green{background:#10b981;color:#fff}.btn-purple{background:#6366f1;color:#fff}
+.progress-bar-wrap{background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden;margin-top:.75rem}
+.progress-bar{height:100%;background:#10b981;width:0%;transition:width .3s}
+.drop-zone{border:2px dashed #d1d5db;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa}
+.drop-zone:hover{background:#eff6ff;border-color:#6366f1}
+.drop-zone p{font-size:13px;color:#6b7280}
+.table-wrap{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-top:.75rem}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:8px 12px;background:#f1f5f9;color:#475569;font-weight:600;border-bottom:1px solid #e5e7eb;position:sticky;top:0}
+.data-table td{padding:7px 12px;border-bottom:1px solid #f1f5f5;vertical-align:middle}
+.data-table tr:hover td{background:#f8fafc}
+.table-scroll{max-height:360px;overflow-y:auto}
+.main-nav{display:flex;gap:4px;margin-bottom:1.5rem;background:#fff;border-radius:10px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.nav-btn{flex:1;padding:10px;font-size:14px;font-weight:600;border:none;background:transparent;color:#6b7280;cursor:pointer;border-radius:8px;transition:all .2s}
+.nav-btn.active{background:#6366f1;color:#fff}
+.page{display:none}.page.active{display:block}
+.tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:1rem}
+.tab-btn{padding:8px 16px;font-size:13px;font-weight:600;border:none;background:transparent;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab-btn.active{color:#6366f1;border-bottom-color:#6366f1}
+.search-bar{display:flex;gap:8px;margin-bottom:.75rem;align-items:center}
+.search-bar input{flex:1;padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none}
+.empty-state{text-align:center;padding:2rem;color:#9ca3af;font-size:13px}
+.server-bar{background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:.6rem 1rem;font-size:13px;color:#065f46;margin-bottom:1rem;display:flex;align-items:center;gap:10px}
+.server-bar input{flex:1;padding:6px 10px;border:1px solid #6ee7b7;border-radius:6px;font-size:13px;outline:none;background:#fff}
+.server-bar .dot{width:8px;height:8px;border-radius:50%;background:#9ca3af;flex-shrink:0}
+.server-bar .dot.online{background:#10b981}
+.hist-item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid #f1f5f5}
+.hist-item:hover{background:#f8fafc}
+.hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-sent{background:#9ca3af}.dot-delivered{background:#f59e0b}.dot-read{background:#10b981}.dot-failed{background:#ef4444}
+.hist-phone{font-weight:600;font-size:13px;min-width:160px}
+.hist-date{font-size:12px;color:#9ca3af}
+.hist-scroll{max-height:500px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px}
+</style>
+</head>
+<body>
+<h1>📱 Campagne WhatsApp — 360dialog</h1>
+
+<!-- Barre serveur Railway -->
+<div class="server-bar">
+  <div class="dot" id="serverDot"></div>
+  <span style="font-weight:600;white-space:nowrap">Serveur Railway :</span>
+  <input type="text" id="serverUrl" placeholder="https://ton-app.railway.app" oninput="saveServer()" />
+  <button class="btn-sm btn-purple" onclick="testServer()">Tester</button>
+  <span id="serverStatus" style="font-size:12px;white-space:nowrap"></span>
+</div>
+
+<!-- Navigation -->
+<div class="main-nav">
+  <button class="nav-btn active" onclick="showPage('campagne',this)">📤 Campagne</button>
+  <button class="nav-btn" onclick="showPage('resultats',this)">📊 Résultats</button>
+  <button class="nav-btn" onclick="showPage('historique',this);loadHistorique()">🕐 Historique</button>
+</div>
+
+<!-- PAGE CAMPAGNE -->
+<div class="page active" id="page-campagne">
+  <div class="section">
+    <div class="section-title">Connexion 360dialog</div>
+    <div class="row">
+      <div><label>Clé API 360dialog</label><input type="password" id="apiKey" placeholder="sk_live_xxxxxxxxxxxxx" oninput="checkReady()"/></div>
+      <div><label>Phone Number ID (WABA)</label><input type="text" id="phoneId" placeholder="123456789012345" oninput="checkReady()"/></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Template Meta approuvé</div>
+    <div class="row">
+      <div><label>Nom du template</label><input type="text" id="tplName" placeholder="message_whatssap_2" oninput="checkReady()"/></div>
+      <div>
+        <label>Langue</label>
+        <select id="tplLang">
+          <option value="en">English (en)</option>
+          <option value="en_US">English US (en_US)</option>
+          <option value="fr">Français (fr)</option>
+          <option value="ar">Arabe (ar)</option>
+          <option value="pt_BR">Portugais BR (pt_BR)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Import contacts Excel</div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <p style="font-size:32px;margin-bottom:.5rem">📂</p>
+      <p style="font-weight:600;margin-bottom:4px">Glisse ton fichier .xlsx ou clique pour sélectionner</p>
+      <p>Colonne <strong>phone</strong> requise — format international (+212…)</p>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)"/>
+    <div id="importStats" style="display:none;margin-top:.75rem">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="importStatsGrid"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <div style="font-size:13px;color:#6b7280" id="campaignSummary">Configure les sections ci-dessus pour lancer</div>
+      <div id="readyBadge"></div>
+    </div>
+    <button class="btn-primary" id="launchBtn" onclick="launchCampaign()" disabled>▶ Lancer la campagne</button>
+    <div class="progress-bar-wrap" id="progressWrap" style="display:none"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="log-box" id="logBox" style="display:none"></div>
+  </div>
+</div>
+
+<!-- PAGE RÉSULTATS -->
+<div class="page" id="page-resultats">
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="section-title" style="margin:0">📊 Tableau de bord campagne</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="lastRefresh" style="font-size:12px;color:#9ca3af"></span>
+        <button class="btn-sm btn-purple" onclick="refreshStatuts()">🔄 Rafraîchir</button>
+      </div>
+    </div>
+    <div id="noResults" style="text-align:center;padding:2rem;color:#9ca3af">Lance une campagne pour voir les résultats ici.</div>
+    <div id="resultsContent" style="display:none">
+      <div class="stat-cards">
+        <div class="stat-card active" onclick="setTab('all',this)"><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card" onclick="setTab('sent',this)"><div class="stat-val" style="color:#065f46" id="stat-sent">0</div><div class="stat-lbl">✓ Envoyés</div></div>
+        <div class="stat-card" onclick="setTab('delivered',this)"><div class="stat-val" style="color:#f59e0b" id="stat-delivered">0</div><div class="stat-lbl">✓✓ Livrés</div></div>
+        <div class="stat-card" onclick="setTab('read',this)"><div class="stat-val" style="color:#3b82f6" id="stat-read">0</div><div class="stat-lbl">👁 Lus</div></div>
+        <div class="stat-card" onclick="setTab('error',this)"><div class="stat-val" style="color:#991b1b" id="stat-error">0</div><div class="stat-lbl">✗ Échecs</div></div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-all" onclick="switchTab('all')">Tous</button>
+        <button class="tab-btn" id="tab-sent" onclick="switchTab('sent')">Envoyés</button>
+        <button class="tab-btn" id="tab-delivered" onclick="switchTab('delivered')">Livrés</button>
+        <button class="tab-btn" id="tab-read" onclick="switchTab('read')">Lus 👁</button>
+        <button class="tab-btn" id="tab-error" onclick="switchTab('error')">Échecs</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Rechercher..." oninput="renderTable()"/>
+        <button class="btn-sm btn-green" onclick="exportExcel(currentTab)">⬇ Exporter Excel</button>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table class="data-table"><thead id="mainTableHead"></thead><tbody id="mainTableBody"></tbody></table>
+      </div></div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:.5rem;text-align:right" id="rowCount"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE HISTORIQUE -->
+<div class="page" id="page-historique">
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="section-title" style="margin:0">🕐 Historique complet</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="histCount" style="font-size:12px;color:#9ca3af"></span>
+        <button class="btn-sm btn-purple" onclick="loadHistorique()">🔄 Rafraîchir</button>
+        <button class="btn-sm btn-green" onclick="exportHistorique()">⬇ Exporter Excel</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="histSearch" placeholder="🔍 Rechercher un numéro..." oninput="renderHistorique()" style="padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;flex:1;min-width:200px"/>
+      <select id="histFilter" onchange="renderHistorique()" style="padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none">
+        <option value="all">Tous les statuts</option>
+        <option value="read">Lus</option>
+        <option value="delivered">Livrés</option>
+        <option value="sent">Envoyés</option>
+        <option value="failed">Échecs</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:16px;font-size:12px;color:#6b7280;margin-bottom:.75rem">
+      <span><span class="hist-dot dot-sent" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Envoyé</span>
+      <span><span class="hist-dot dot-delivered" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Livré</span>
+      <span><span class="hist-dot dot-read" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Lu</span>
+      <span><span class="hist-dot dot-failed" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Échec</span>
+    </div>
+    <div class="hist-scroll" id="histList"><div class="empty-state">Clique sur Rafraîchir</div></div>
+  </div>
+</div>
+
+<script>
+let contacts=[],allOriginalCols=[],campaignResults=[],statuts={},historique=[],currentTab='all';
+let SERVER_URL=localStorage.getItem('serverUrl')||'';
+
+// Init
+window.onload=()=>{
+  if(SERVER_URL){document.getElementById('serverUrl').value=SERVER_URL;testServer();}
+};
+
+function saveServer(){
+  SERVER_URL=document.getElementById('serverUrl').value.trim().replace(/\/$/,'');
+  localStorage.setItem('serverUrl',SERVER_URL);
+}
+
+async function testServer(){
+  saveServer();
+  const dot=document.getElementById('serverDot');
+  const status=document.getElementById('serverStatus');
+  if(!SERVER_URL){status.textContent='';return;}
+  try{
+    const r=await fetch(SERVER_URL+'/health');
+    if(r.ok){
+      const d=await r.json();
+      dot.className='dot online';
+      status.textContent=`✅ Connecté — ${d.historique} événements`;
+      status.style.color='#065f46';
+    }else throw new Error();
+  }catch(e){
+    dot.className='dot';
+    status.textContent='❌ Non accessible';
+    status.style.color='#991b1b';
+  }
+}
+
+function showPage(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+}
+
+async function loadStatuts(){
+  if(!SERVER_URL)return;
+  try{const r=await fetch(SERVER_URL+'/statuts');if(r.ok)statuts=await r.json();
+  document.getElementById('lastRefresh').textContent='Mis à jour à '+new Date().toLocaleTimeString('fr-FR');}catch(e){}
+}
+
+async function refreshStatuts(){await loadStatuts();updateStats();renderTable();}
+
+async function loadHistorique(){
+  if(!SERVER_URL){document.getElementById('histList').innerHTML='<div class="empty-state">⚠ Configure l\'URL du serveur Railway en haut</div>';return;}
+  try{
+    const r=await fetch(SERVER_URL+'/historique');
+    if(r.ok){historique=await r.json();renderHistorique();}
+  }catch(e){document.getElementById('histList').innerHTML='<div class="empty-state">⚠ Serveur non accessible</div>';}
+}
+
+function renderHistorique(){
+  const q=document.getElementById('histSearch').value.toLowerCase();
+  const f=document.getElementById('histFilter').value;
+  let data=historique;
+  if(f!=='all')data=data.filter(h=>h.status===f);
+  if(q)data=data.filter(h=>h.phone.includes(q));
+  document.getElementById('histCount').textContent=`${data.length} événement${data.length>1?'s':''}`;
+  if(!data.length){document.getElementById('histList').innerHTML='<div class="empty-state">Aucun résultat</div>';return;}
+  const dotClass={sent:'dot-sent',delivered:'dot-delivered',read:'dot-read',failed:'dot-failed'};
+  const labelMap={sent:'Envoyé',delivered:'Livré',read:'Lu',failed:'Échec'};
+  const badgeClass={sent:'badge-gray',delivered:'badge-warn',read:'badge-blue',failed:'badge-danger'};
+  let html='';
+  data.slice(0,500).forEach(h=>{
+    html+=`<div class="hist-item">
+      <div class="hist-dot ${dotClass[h.status]||'dot-sent'}"></div>
+      <div class="hist-phone">${h.phone}</div>
+      <div><span class="badge ${badgeClass[h.status]||'badge-gray'}">${labelMap[h.status]||h.status}</span></div>
+      <div class="hist-date">📅 ${h.date||h.timestamp}</div>
+    </div>`;
+  });
+  if(data.length>500)html+=`<div class="empty-state">... et ${data.length-500} autres — exporte en Excel</div>`;
+  document.getElementById('histList').innerHTML=html;
+}
+
+function exportHistorique(){
+  const q=document.getElementById('histSearch').value.toLowerCase();
+  const f=document.getElementById('histFilter').value;
+  let data=historique;
+  if(f!=='all')data=data.filter(h=>h.status===f);
+  if(q)data=data.filter(h=>h.phone.includes(q));
+  if(!data.length){alert('Aucune donnée.');return;}
+  const ws=XLSX.utils.json_to_sheet(data.map(h=>({Téléphone:h.phone,Statut:{sent:'Envoyé',delivered:'Livré',read:'Lu',failed:'Échec'}[h.status]||h.status,Date:h.date,Horodatage:h.timestamp})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Historique');
+  ws['!cols']=[{wch:20},{wch:12},{wch:24},{wch:28}];
+  XLSX.writeFile(wb,'historique_whatsapp.xlsx');
+}
+
+function getPhone(row){
+  const k=Object.keys(row).find(k=>k.toLowerCase()==='phone'||k.toLowerCase().includes('tel')||k.toLowerCase().includes('gsm')||k.toLowerCase().includes('num'));
+  return k?String(row[k]).replace(/\s/g,''):'';
+}
+
+function getStatutBadge(phone){
+  const s=statuts[phone];if(!s||!s.dernierStatut)return'<span class="badge badge-gray">—</span>';
+  const d=s.dernierStatut;
+  if(d==='read')return'<span class="badge badge-blue">👁 Lu</span>';
+  if(d==='delivered')return'<span class="badge badge-warn">✓✓ Livré</span>';
+  if(d==='sent')return'<span class="badge badge-gray">✓ Envoyé</span>';
+  return`<span class="badge badge-gray">${d}</span>`;
+}
+
+function getStatutTexte(phone){
+  const s=statuts[phone];if(!s||!s.dernierStatut)return'—';
+  return{read:'Lu',delivered:'Livré',sent:'Envoyé'}[s.dernierStatut]||s.dernierStatut;
+}
+
+function handleFile(input){
+  const file=input.files[0];if(!file)return;
+  document.getElementById('dropZone').innerHTML=`<p style="font-size:24px">✅</p><p style="font-weight:600;margin-top:.4rem">${file.name}</p>`;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    contacts=rows;allOriginalCols=rows.length?Object.keys(rows[0]):[];
+    const valid=rows.filter(r=>getPhone(r)),inv=rows.length-valid.length;
+    document.getElementById('importStatsGrid').innerHTML=`
+      <div class="stat-card"><div class="stat-val">${rows.length}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#065f46">${valid.length}</div><div class="stat-lbl">Valides</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#991b1b">${inv}</div><div class="stat-lbl">Sans numéro</div></div>`;
+    document.getElementById('importStats').style.display='block';
+    checkReady();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.background='#eff6ff'});
+dz.addEventListener('dragleave',()=>dz.style.background='');
+dz.addEventListener('drop',e=>{e.preventDefault();dz.style.background='';const f=e.dataTransfer.files[0];if(f){document.getElementById('fileInput').files=e.dataTransfer.files;handleFile(document.getElementById('fileInput'))}});
+
+function checkReady(){
+  const api=document.getElementById('apiKey').value.trim();
+  const pid=document.getElementById('phoneId').value.trim();
+  const tpl=document.getElementById('tplName').value.trim();
+  const ready=api&&pid&&tpl&&contacts.length>0&&SERVER_URL;
+  document.getElementById('launchBtn').disabled=!ready;
+  const valid=contacts.filter(r=>getPhone(r));
+  document.getElementById('readyBadge').innerHTML=ready?`<span class="badge badge-success">✓ Prêt — ${valid.length} contacts</span>`:`<span class="badge badge-warn">Configuration incomplète</span>`;
+  if(ready)document.getElementById('campaignSummary').textContent=`Template "${tpl}" · ${valid.length} destinataires`;
+}
+
+async function launchCampaign(){
+  const apiKey=document.getElementById('apiKey').value.trim();
+  const tplName=document.getElementById('tplName').value.trim();
+  const tplLang=document.getElementById('tplLang').value;
+  const valid=contacts.filter(r=>getPhone(r));
+  document.getElementById('launchBtn').disabled=true;
+  document.getElementById('progressWrap').style.display='block';
+  document.getElementById('logBox').style.display='block';
+  const logBox=document.getElementById('logBox');logBox.innerHTML='';
+  const bar=document.getElementById('progressBar');
+  campaignResults=[];
+  await loadStatuts();
+
+  for(let i=0;i<valid.length;i++){
+    const contact=valid[i];const phone=getPhone(contact);
+    let status='',msgId='',errMsg='';
+    try{
+      const res=await fetch(SERVER_URL+'/send',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({_apiKey:apiKey,messaging_product:'whatsapp',recipient_type:'individual',to:phone,type:'template',template:{name:tplName,language:{code:tplLang}}})
+      });
+      const json=await res.json();
+      if(res.ok&&json.messages){status='Envoyé';msgId=json.messages[0]?.id||'';addLog(logBox,`✓ ${phone}  ID: ${msgId}`,'ok');}
+      else{status='Échec';errMsg=json.meta?.developer_message||json.error?.message||JSON.stringify(json);addLog(logBox,`✗ ${phone}  — ${errMsg}`,'err');}
+    }catch(e){status='Échec';errMsg='Serveur non accessible';addLog(logBox,`✗ ${phone}  — ${errMsg}`,'err');}
+    campaignResults.push({...contact,WA_Statut:status,WA_MessageID:msgId,WA_Erreur:errMsg});
+    bar.style.width=Math.round(((i+1)/valid.length)*100)+'%';
+    await sleep(300);
+  }
+
+  const s=campaignResults.filter(r=>r.WA_Statut==='Envoyé').length;
+  const e=campaignResults.filter(r=>r.WA_Statut==='Échec').length;
+  addLog(logBox,`— Terminé : ${s} envoyés, ${e} échecs`,'info');
+  document.getElementById('launchBtn').disabled=false;
+  document.getElementById('launchBtn').textContent='↺ Relancer';
+  document.getElementById('noResults').style.display='none';
+  document.getElementById('resultsContent').style.display='block';
+  updateStats();renderTable();
+  setInterval(refreshStatuts,30000);
+}
+
+function updateStats(){
+  const total=campaignResults.length;
+  const sent=campaignResults.filter(r=>r.WA_Statut==='Envoyé').length;
+  const errors=campaignResults.filter(r=>r.WA_Statut==='Échec').length;
+  const phones=campaignResults.filter(r=>r.WA_Statut==='Envoyé').map(r=>getPhone(r));
+  const lus=phones.filter(p=>statuts[p]&&statuts[p].dernierStatut==='read').length;
+  const livres=phones.filter(p=>statuts[p]&&statuts[p].dernierStatut==='delivered').length;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-sent').textContent=sent;
+  document.getElementById('stat-delivered').textContent=livres;
+  document.getElementById('stat-read').textContent=lus;
+  document.getElementById('stat-error').textContent=errors;
+}
+
+function setTab(tab,card){document.querySelectorAll('.stat-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');switchTab(tab);}
+function switchTab(tab){currentTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');document.getElementById('searchInput').value='';renderTable();}
+
+function getFiltered(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  let data=campaignResults;
+  if(currentTab==='sent')data=data.filter(r=>r.WA_Statut==='Envoyé');
+  else if(currentTab==='error')data=data.filter(r=>r.WA_Statut==='Échec');
+  else if(currentTab==='read')data=data.filter(r=>{const p=getPhone(r);return statuts[p]&&statuts[p].dernierStatut==='read';});
+  else if(currentTab==='delivered')data=data.filter(r=>{const p=getPhone(r);return statuts[p]&&statuts[p].dernierStatut==='delivered';});
+  if(q)data=data.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q)));
+  return data;
+}
+
+function renderTable(){
+  const data=getFiltered();const showCols=allOriginalCols.slice(0,4);
+  document.getElementById('mainTableHead').innerHTML=`<tr>${showCols.map(c=>`<th>${c}</th>`).join('')}<th>Envoi</th><th>Lecture</th><th>Message ID</th><th>Erreur</th></tr>`;
+  if(!data.length){document.getElementById('mainTableBody').innerHTML=`<tr><td colspan="${showCols.length+4}" class="empty-state">Aucun résultat</td></tr>`;document.getElementById('rowCount').textContent='';return;}
+  let html='';
+  data.forEach(r=>{const phone=getPhone(r);
+    html+=`<tr>${showCols.map(c=>`<td>${r[c]||''}</td>`).join('')}
+      <td><span class="badge ${r.WA_Statut==='Envoyé'?'badge-success':'badge-danger'}">${r.WA_Statut}</span></td>
+      <td>${getStatutBadge(phone)}</td>
+      <td style="font-size:11px;font-family:monospace;color:#9ca3af;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.WA_MessageID?r.WA_MessageID.substring(0,20)+'…':'—'}</td>
+      <td style="font-size:11px;color:#ef4444">${r.WA_Erreur||''}</td></tr>`;
+  });
+  document.getElementById('mainTableBody').innerHTML=html;
+  document.getElementById('rowCount').textContent=`${data.length} ligne${data.length>1?'s':''} affichée${data.length>1?'s':''}`;
+}
+
+function exportExcel(filter){
+  const data=getFiltered();if(!data.length){alert('Aucune donnée.');return;}
+  const exportData=data.map(r=>{const phone=getPhone(r);const s=statuts[phone]||{};
+    return{...r,WA_Statut_Lecture:getStatutTexte(phone),WA_Heure_Lu:s.read||'',WA_Heure_Livre:s.delivered||'',WA_Heure_Envoye:s.sent||''};});
+  const ws=XLSX.utils.json_to_sheet(exportData);const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Résultats');
+  ws['!cols']=Object.keys(exportData[0]).map(k=>({wch:Math.max(k.length,16)}));
+  const names={all:'campagne_complet',sent:'campagne_envoyes',delivered:'campagne_livres',read:'campagne_lus',error:'campagne_echecs'};
+  XLSX.writeFile(wb,(names[filter]||'campagne')+'.xlsx');
+}
+
+function addLog(box,msg,type){const line=document.createElement('div');line.className=`log-line log-${type}`;line.textContent=msg;box.appendChild(line);box.scrollTop=box.scrollHeight;}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+['apiKey','phoneId','tplName'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',checkReady);});
+</script>
+</body>
+</html>
